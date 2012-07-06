@@ -1,9 +1,11 @@
 <?php
 
+namespace Json;
+
 /**
  *
  */
-class JLexToken
+class Token
 {
     public $line;
     public $col;

@@ -1,20 +1,19 @@
 <?php
-require_once __DIR__ . DIRECTORY_SEPARATOR . 'JLexToken.php';
-require_once __DIR__ . DIRECTORY_SEPARATOR . 'JLexBase.php';
-require_once __DIR__ . DIRECTORY_SEPARATOR . 'JSONParser.php';
+/**
+ *
+ */
+
+namespace Json;
 
 /**
  *
  */
-class JSONLex extends JLexBase
+class Lexer extends LexerBase
 {
     protected $_countChars = true;
     protected $_countLines = true;
 
     protected $_auxBuffer = '';
-
-    const LEX_STATE_INITIAL = 0;
-    const LEX_STATE_STRING_BEGIN = 1;
 
     static $stateDtrans = array(0, 36);
 
@@ -212,7 +211,6 @@ class JSONLex extends JLexBase
     public function __construct($stream)
     {
         parent::__construct($stream);
-        $this->_lexicalState = self::LEX_STATE_INITIAL;
 
         /*
         $cnt = count($this->_yy_cmap);
@@ -292,7 +290,7 @@ class JSONLex extends JLexBase
                 }
             } else {
                 if (self::YY_NO_STATE == $lastAcceptState) {
-                    throw new Exception("Lexical Error: Unmatched Input.");
+                    throw new \Exception("Lexical Error: Unmatched Input.");
                 } else {
                     $anchor = self::$_acpt[$lastAcceptState];
                     if (0 != (self::YY_END & $anchor)) {
@@ -310,51 +308,51 @@ class JSONLex extends JLexBase
                         case -3:
                             break;
                         case 3:
-                            return $this->createToken(JSONParser::TK_NUMBER);
+                            return $this->createToken(Parser::TK_NUMBER);
                         case -4:
                             break;
                         case 4:
-                            return $this->createToken(JSONParser::TK_LEFT_BRACE);
+                            return $this->createToken(Parser::TK_LEFT_BRACE);
                         case -5:
                             break;
                         case 5:
-                            return $this->createToken(JSONParser::TK_RIGHT_BRACE);
+                            return $this->createToken(Parser::TK_RIGHT_BRACE);
                         case -6:
                             break;
                         case 6:
-                            return $this->createToken(JSONParser::TK_LEFT_SQUARE);
+                            return $this->createToken(Parser::TK_LEFT_SQUARE);
                         case -7:
                             break;
                         case 7:
-                            return $this->createToken(JSONParser::TK_RIGHT_SQUARE);
+                            return $this->createToken(Parser::TK_RIGHT_SQUARE);
                         case -8:
                             break;
                         case 8:
-                            return $this->createToken(JSONParser::TK_COMMA);
+                            return $this->createToken(Parser::TK_COMMA);
                         case -9:
                             break;
                         case 9:
-                            return $this->createToken(JSONParser::TK_COLON);
+                            return $this->createToken(Parser::TK_COLON);
                         case -10:
                             break;
                         case 10:
                         case -11:
                             break;
                         case 11:
-                            return $this->createToken(JSONParser::TK_NUMBER);
+                            return $this->createToken(Parser::TK_NUMBER);
                         case -12:
                             break;
                         case 12:
-                            return $this->createToken(JSONParser::TK_NULL);
+                            return $this->createToken(Parser::TK_NULL);
                         case -13:
                             break;
                         case 13:
-                            return $this->createToken(JSONParser::TK_BOOL);
+                            return $this->createToken(Parser::TK_BOOL);
                         case -14:
                             break;
                         case 14:
                             $this->_begin(self::LEX_STATE_INITIAL);
-                            return $this->createToken(JSONParser::TK_STRING, $this->_auxBuffer);
+                            return $this->createToken(Parser::TK_STRING, $this->_auxBuffer);
                         case -15:
                             break;
                         case 15:
@@ -390,7 +388,7 @@ class JSONLex extends JLexBase
                         case -23:
                             break;
                         case 24:
-                            return $this->createToken(JSONParser::TK_NUMBER);
+                            return $this->createToken(Parser::TK_NUMBER);
                         case -24:
                             break;
                         default:

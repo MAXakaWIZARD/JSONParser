@@ -39,8 +39,7 @@ class CustomParser
         $this->_data = array();
         $this->_writePointer = &$this->_data;
 
-        require_once __DIR__ . '/../package/JSONParser.php';
-        $parser = new \JSONParser();
+        $parser = new \Json\Parser();
 
         $parser->setPropertyHandler(array($this, 'handlerProperty'));
         $parser->setScalarHandler(array($this, 'handlerScalar'));

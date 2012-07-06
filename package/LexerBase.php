@@ -25,10 +25,12 @@
   **************************************************************
 */
 
+namespace Json;
+
 /**
  *
  */
-class JLexBase
+class LexerBase
 {
     const BUFFER_SIZE = 8192;
     const YY_F = -1;
@@ -39,6 +41,9 @@ class JLexBase
     const YY_NO_ANCHOR = 4;
     const YY_BOL = 65536;
     const YY_EOF = 65537;
+
+    const LEX_STATE_INITIAL = 0;
+    const LEX_STATE_STRING_BEGIN = 1;
 
     protected $_reader;
     protected $_streamFilename = null;
@@ -77,6 +82,8 @@ class JLexBase
      */
     public function __construct($stream)
     {
+        $this->_lexicalState = self::LEX_STATE_INITIAL;
+
         $this->_reader = $stream;
         $meta = stream_get_meta_data($stream);
         if (!isset($meta['uri'])) {
@@ -235,14 +242,14 @@ class JLexBase
      * @param $code
      * @param $fatal
      *
-     * @throws Exception
+     * @throws \Exception
      */
     protected function _triggerError($code, $fatal)
     {
         print self::$errorStrings[$code];
         flush();
         if ($fatal) {
-            throw new Exception("JLex fatal error " . self::$errorStrings[$code]);
+            throw new \Exception("JLex fatal error " . self::$errorStrings[$code]);
         }
     }
 
@@ -251,24 +258,24 @@ class JLexBase
      * @param null $type
      * @param null $value
      *
-     * @return JLexToken
+     * @return Token
      */
     public function createToken($type = null, $value = null)
     {
         if ($type === null) {
             $type = $this->_getText();
         }
-        $tok = new JLexToken($type);
+        $tok = new Token($type);
         $this->annotateToken($tok, $value);
         return $tok;
     }
 
     /**
      * annotates a token with a value and source positioning
-     * @param JLexToken $tok
+     * @param Token $tok
      * @param null      $value
      */
-    public function annotateToken(JLexToken $tok, $value = null)
+    public function annotateToken(Token $tok, $value = null)
     {
         $tok->value = is_null($value) ? $this->_getText() : $value;
         $tok->col = $this->_col;

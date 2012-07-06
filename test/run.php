@@ -1,7 +1,14 @@
 <?php
+define('BASE_PATH', realpath(__DIR__ . '/../'));
+
+require_once BASE_PATH . '/package/Token.php';
+require_once BASE_PATH . '/package/LexerBase.php';
+require_once BASE_PATH . '/package/Lexer.php';
+require_once BASE_PATH . '/package/Parser.php';
+require_once BASE_PATH . '/package/ParserException.php';
 include('CustomParser.php');
 
-$parser = new CustomParser();
+$parser = new \CustomParser();
 
 $startTime = microtime(true);
 $parser->parse('data.json');

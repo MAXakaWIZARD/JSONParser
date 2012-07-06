@@ -1,7 +1,4 @@
 <?php
-require_once __DIR__ . DIRECTORY_SEPARATOR . 'JSONLex.php';
-require_once __DIR__ . DIRECTORY_SEPARATOR . 'JSONParserException.php';
-
 /**
  * This code is released under the MIT license.
  * For more details, see the accompanying LICENCE file in this folder.
@@ -15,7 +12,13 @@ require_once __DIR__ . DIRECTORY_SEPARATOR . 'JSONParserException.php';
  * @author Guillaume Bodi
  *
  */
-class JSONParser
+
+namespace Json;
+
+/**
+ *
+ */
+class Parser
 {
 
     /**
@@ -266,19 +269,19 @@ class JSONParser
      * Accept a new token, generally provided by a Lexer.
      *
      * @param integer   $tokenId
-     * @param JLexToken $token
+     * @param \Json\Token $token
      *
-     * @throws JSONParserException if the document does not have a valid structure.
+     * @throws \Json\ParserException if the document does not have a valid structure.
      */
     private function _parse($tokenId, $token)
     {
         if (!$this->_validateToken($tokenId)) {
             $message = 'Invalid syntax: expected another token.';
-            $message .= ' got ' . $tokenId . ' current token: ' . $this->_currentTokenId;
-            throw new JSONParserException($message);
+            $message .= ' Got token: ' . $tokenId . ', previous token: ' . $this->_currentTokenId;
+            throw new ParserException($message);
         }
 
-        $this->_processCurrentToken($tokenId, $token);
+        $this->_processToken($tokenId, $token);
     }
 
     /**
@@ -287,7 +290,7 @@ class JSONParser
      * @param integer   $tokenId
      * @param JLexToken $token
      */
-    private function _processCurrentToken($tokenId, $token)
+    private function _processToken($tokenId, $token)
     {
         // update the current token
         $this->_currentTokenId = $tokenId;
@@ -493,7 +496,7 @@ class JSONParser
      *
      * @param resource|string $file resource to read
      *
-     * @throws JSONParserException if the resource to read cannot be found
+     * @throws \Json\ParserException if the resource to read cannot be found
      * OR if the document does not conform to JSON's syntax.
      */
     public function parseDocument($file)
@@ -501,11 +504,11 @@ class JSONParser
         // check the parameter type to see if we need to open a new stream
         $stream = is_resource($file) ? $file : fopen($file, 'r');
         if (is_null($stream)) {
-            throw new JSONParserException(sprintf('Could not open resource %s for reading', $file));
+            throw new ParserException(sprintf('Could not open resource %s for reading', $file));
         }
 
         // instanciate a lexer
-        $lexer = new JSONLex($stream);
+        $lexer = new Lexer($stream);
 
         // parse the document
         while ($token = $lexer->nextToken()) {
