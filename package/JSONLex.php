@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . DIRECTORY_SEPARATOR . 'JLexToken.php';
 require_once __DIR__ . DIRECTORY_SEPARATOR . 'JLexBase.php';
 require_once __DIR__ . DIRECTORY_SEPARATOR . 'JSONParser.php';
 
@@ -7,28 +8,17 @@ require_once __DIR__ . DIRECTORY_SEPARATOR . 'JSONParser.php';
  */
 class JSONLex extends JLexBase
 {
-    const YY_BUFFER_SIZE = 512;
-    const YY_F = -1;
-    const YY_NO_STATE = -1;
-    const YY_NOT_ACCEPT = 0;
-    const YY_START = 1;
-    const YY_END = 2;
-    const YY_NO_ANCHOR = 4;
-    const YY_BOL = 65536;
-    const YY_EOF = 65537;
+    protected $_countChars = true;
+    protected $_countLines = true;
 
-    private $buffer = '';
+    protected $_auxBuffer = '';
 
-    protected $yy_count_chars = true;
+    const LEX_STATE_INITIAL = 0;
+    const LEX_STATE_STRING_BEGIN = 1;
 
-    protected $yy_count_lines = true;
+    static $stateDtrans = array(0, 36);
 
-    const YYINITIAL = 0;
-    const STRING_BEGIN = 1;
-
-    static $yy_state_dtrans = array(0, 36);
-
-    static $_yyAcpt
+    static $_acpt
         = array(
             /* 0 */
             self::YY_NOT_ACCEPT,
@@ -113,7 +103,7 @@ class JSONLex extends JLexBase
     /**
      * @var array
      */
-    private $_yyCmap
+    protected $_cMap
         = array(
             2, 2, 2, 2, 2, 2, 2, 2, 2, 25, 25, 2, 2, 25, 2, 2, 2, 2, 2, 2,
             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 25, 2, 1, 2, 2, 2, 2, 2,
@@ -123,12 +113,12 @@ class JSONLex extends JLexBase
             2, 15, 5, 2, 2, 2, 2, 2, 17, 2, 6, 2, 2, 2, 7, 18, 8, 14, 2, 2,
             2, 2, 2, 19, 2, 20);
 
-    static $_yyRmap
+    static $_rMap
         = array(
             0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 3, 4, 1, 1, 1, 5, 1, 1, 1, 1,
             1, 1, 1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 7, 18, 19, 20,);
 
-    static $_yyNxt
+    static $_nxt
         = array(
             array(
                 1, 2, -1, -1, -1, 23, 25, -1, 26, 27, 3, -1, -1, -1, -1, -1, -1, -1, -1, 4,
@@ -222,7 +212,7 @@ class JSONLex extends JLexBase
     public function __construct($stream)
     {
         parent::__construct($stream);
-        $this->yy_lexical_state = self::YYINITIAL;
+        $this->_lexicalState = self::LEX_STATE_INITIAL;
 
         /*
         $cnt = count($this->_yy_cmap);
@@ -240,14 +230,14 @@ class JSONLex extends JLexBase
         }
         */
 
+        //fill array
         for ($i = 1; $i <= 65410; $i++) {
-            $this->_yyCmap[] = 2;
+            $this->_cMap[] = 2;
         }
-        $this->_yyCmap[] = 0;
-        $this->_yyCmap[] = 0;
+        $this->_cMap[] = 0;
+        $this->_cMap[] = 0;
 
-        var_dump(count($this->_yyCmap));
-
+        //var_dump(count($this->_cMap));
         //count = 65538
 
         /*
@@ -269,196 +259,153 @@ class JSONLex extends JLexBase
      */
     public function nextToken()
     {
-        $yy_anchor = self::YY_NO_ANCHOR;
-        $yy_state = self::$yy_state_dtrans[$this->yy_lexical_state];
-        $yy_next_state = self::YY_NO_STATE;
-        $yy_last_accept_state = self::YY_NO_STATE;
-        $yy_initial = true;
+        $anchor = self::YY_NO_ANCHOR;
+        $state = self::$stateDtrans[$this->_lexicalState];
+        $nextState = self::YY_NO_STATE;
+        $lastAcceptState = self::YY_NO_STATE;
+        $initial = true;
 
-        $this->yy_mark_start();
-        $yy_this_accept = self::$_yyAcpt[$yy_state];
-        if (self::YY_NOT_ACCEPT != $yy_this_accept) {
-            $yy_last_accept_state = $yy_state;
-            $this->yy_mark_end();
+        $this->_markStart();
+        $accept = self::$_acpt[$state];
+        if (self::YY_NOT_ACCEPT != $accept) {
+            $lastAcceptState = $state;
+            $this->_markEnd();
         }
+
         while (true) {
-            if ($yy_initial && $this->yy_at_bol) {
-                $yy_lookahead = self::YY_BOL;
+            if ($initial && $this->_atBol) {
+                $lookahead = self::YY_BOL;
             } else {
-                $yy_lookahead = $this->yy_advance();
+                $lookahead = $this->_advance();
             }
-            $yy_next_state = self::$_yyNxt[self::$_yyRmap[$yy_state]][$this->_yyCmap[$yy_lookahead]];
-            if (self::YY_EOF == $yy_lookahead && true == $yy_initial) {
+            $nextState = self::$_nxt[self::$_rMap[$state]][$this->_cMap[$lookahead]];
+            if (self::YY_EOF == $lookahead && true == $initial) {
                 return null;
             }
-            if (self::YY_F != $yy_next_state) {
-                $yy_state = $yy_next_state;
-                $yy_initial = false;
-                $yy_this_accept = self::$_yyAcpt[$yy_state];
-                if (self::YY_NOT_ACCEPT != $yy_this_accept) {
-                    $yy_last_accept_state = $yy_state;
-                    $this->yy_mark_end();
+            if (self::YY_F != $nextState) {
+                $state = $nextState;
+                $initial = false;
+                $accept = self::$_acpt[$state];
+                if (self::YY_NOT_ACCEPT != $accept) {
+                    $lastAcceptState = $state;
+                    $this->_markEnd();
                 }
             } else {
-                if (self::YY_NO_STATE == $yy_last_accept_state) {
+                if (self::YY_NO_STATE == $lastAcceptState) {
                     throw new Exception("Lexical Error: Unmatched Input.");
                 } else {
-                    $yy_anchor = self::$_yyAcpt[$yy_last_accept_state];
-                    if (0 != (self::YY_END & $yy_anchor)) {
-                        $this->yy_move_end();
+                    $anchor = self::$_acpt[$lastAcceptState];
+                    if (0 != (self::YY_END & $anchor)) {
+                        $this->_moveEnd();
                     }
-                    $this->yy_to_mark();
-                    switch ($yy_last_accept_state) {
+                    $this->_toMark();
+                    switch ($lastAcceptState) {
                         case 1:
 
                         case -2:
                             break;
                         case 2:
-                            {
-                            $this->buffer = '';
-                            $this->yybegin(self::STRING_BEGIN);
-                            }
+                            $this->_auxBuffer = '';
+                            $this->_begin(self::LEX_STATE_STRING_BEGIN);
                         case -3:
                             break;
                         case 3:
-                            {
                             return $this->createToken(JSONParser::TK_NUMBER);
-                            }
                         case -4:
                             break;
                         case 4:
-                            {
                             return $this->createToken(JSONParser::TK_LEFT_BRACE);
-                            }
                         case -5:
                             break;
                         case 5:
-                            {
                             return $this->createToken(JSONParser::TK_RIGHT_BRACE);
-                            }
                         case -6:
                             break;
                         case 6:
-                            {
                             return $this->createToken(JSONParser::TK_LEFT_SQUARE);
-                            }
                         case -7:
                             break;
                         case 7:
-                            {
                             return $this->createToken(JSONParser::TK_RIGHT_SQUARE);
-                            }
                         case -8:
                             break;
                         case 8:
-                            {
                             return $this->createToken(JSONParser::TK_COMMA);
-                            }
                         case -9:
                             break;
                         case 9:
-                            {
                             return $this->createToken(JSONParser::TK_COLON);
-                            }
                         case -10:
                             break;
                         case 10:
-                            {
-                            }
                         case -11:
                             break;
                         case 11:
-                            {
                             return $this->createToken(JSONParser::TK_NUMBER);
-                            }
                         case -12:
                             break;
                         case 12:
-                            {
                             return $this->createToken(JSONParser::TK_NULL);
-                            }
                         case -13:
                             break;
                         case 13:
-                            {
                             return $this->createToken(JSONParser::TK_BOOL);
-                            }
                         case -14:
                             break;
                         case 14:
-                            {
-                            $this->yybegin(self::YYINITIAL);
-                            return $this->createToken(JSONParser::TK_STRING, $this->buffer);
-                            }
+                            $this->_begin(self::LEX_STATE_INITIAL);
+                            return $this->createToken(JSONParser::TK_STRING, $this->_auxBuffer);
                         case -15:
                             break;
                         case 15:
-                            {
-                            $this->buffer .= $this->yytext();
-                            }
+                            $this->_auxBuffer .= $this->_getText();
                         case -16:
                             break;
                         case 16:
-                            {
-                            $this->buffer .= '"';
-                            }
+                            $this->_auxBuffer .= '"';
                         case -17:
                             break;
                         case 17:
-                            {
-                            $this->buffer .= '\\';
-                            }
+                            $this->_auxBuffer .= '\\';
                         case -18:
                             break;
                         case 18:
-                            {
-                            $this->buffer .= "\b";
-                            }
+                            $this->_auxBuffer .= "\b";
                         case -19:
                             break;
                         case 19:
-                            {
-                            $this->buffer .= "\f";
-                            }
+                            $this->_auxBuffer .= "\f";
                         case -20:
                             break;
                         case 20:
-                            {
-                            $this->buffer .= "\n";
-                            }
+                            $this->_auxBuffer .= "\n";
                         case -21:
                             break;
                         case 21:
-                            {
-                            $this->buffer .= "\r";
-                            }
+                            $this->_auxBuffer .= "\r";
                         case -22:
                             break;
                         case 22:
-                            {
-                            $this->buffer .= "\t";
-                            }
+                            $this->_auxBuffer .= "\t";
                         case -23:
                             break;
                         case 24:
-                            {
                             return $this->createToken(JSONParser::TK_NUMBER);
-                            }
                         case -24:
                             break;
                         default:
-                            $this->yy_error('INTERNAL', false);
+                            $this->_triggerError('INTERNAL', false);
                         case -1:
                     }
-                    $yy_initial = true;
-                    $yy_state = self::$yy_state_dtrans[$this->yy_lexical_state];
-                    $yy_next_state = self::YY_NO_STATE;
-                    $yy_last_accept_state = self::YY_NO_STATE;
-                    $this->yy_mark_start();
-                    $yy_this_accept = self::$_yyAcpt[$yy_state];
-                    if (self::YY_NOT_ACCEPT != $yy_this_accept) {
-                        $yy_last_accept_state = $yy_state;
-                        $this->yy_mark_end();
+                    $initial = true;
+                    $state = self::$stateDtrans[$this->_lexicalState];
+                    $nextState = self::YY_NO_STATE;
+                    $lastAcceptState = self::YY_NO_STATE;
+                    $this->_markStart();
+                    $accept = self::$_acpt[$state];
+                    if (self::YY_NOT_ACCEPT != $accept) {
+                        $lastAcceptState = $state;
+                        $this->_markEnd();
                     }
                 }
             }

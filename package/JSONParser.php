@@ -248,14 +248,14 @@ class JSONParser
      */
     public function __construct()
     {
-        $this->initialise();
+        $this->_init();
     }
 
     /**
      * Resets the parser.
      * It is necessary to call initialise again if you plan to reuse the same parser instance with a different document.
      */
-    public function initialise()
+    private function _init()
     {
         $this->_currentTokenId = self::TK_INIT;
         $this->_stateStack = array(self::STATE_INIT);
@@ -270,40 +270,15 @@ class JSONParser
      *
      * @throws JSONParserException if the document does not have a valid structure.
      */
-    public function parse($tokenId, $token)
+    private function _parse($tokenId, $token)
     {
-        if (!$this->validateToken($tokenId)) {
+        if (!$this->_validateToken($tokenId)) {
             $message = 'Invalid syntax: expected another token.';
             $message .= ' got ' . $tokenId . ' current token: ' . $this->_currentTokenId;
             throw new JSONParserException($message);
         }
 
-        $this->processCurrentToken($tokenId, $token);
-    }
-
-    /**
-     * Convenience method for preparing a lexer and parsing a specific file.
-     *
-     * @param resource|string $file resource to read
-     *
-     * @throws JSONParserException if the resource to read cannot be found
-     * OR if the document does not conform to JSON's syntax.
-     */
-    public function parseDocument($file)
-    {
-        // check the parameter type to see if we need to open a new stream
-        $fileResource = is_resource($file) ? $file : fopen($file, 'r');
-        if (is_null($fileResource)) {
-            throw new JSONParserException(sprintf('Could not open resource %s in reading', $file));
-        }
-
-        // instanciate a lexer
-        $lexer = new JSONLex($file);
-
-        // parse the document
-        while ($token = $lexer->nextToken()) {
-            $this->parse($token->type, $token);
-        }
+        $this->_processCurrentToken($tokenId, $token);
     }
 
     /**
@@ -312,7 +287,7 @@ class JSONParser
      * @param integer   $tokenId
      * @param JLexToken $token
      */
-    private function processCurrentToken($tokenId, $token)
+    private function _processCurrentToken($tokenId, $token)
     {
         // update the current token
         $this->_currentTokenId = $tokenId;
@@ -378,7 +353,7 @@ class JSONParser
             case self::TK_STRING;
                 // a string has been detected
                 // checks if a property has already been set
-                if (is_null($this->_activeProperty) && $this->getCurrentState() !== self::STATE_ARRAY) {
+                if (is_null($this->_activeProperty) && $this->_getCurrentState() !== self::STATE_ARRAY) {
                     // no property set, so we assume this is a property
                     $this->_activeProperty = $token;
 
@@ -424,9 +399,9 @@ class JSONParser
      *
      * @return boolean <code>true</code> if the token is acceptable, <code>false</code> otherwise
      */
-    private function validateToken($tokenId)
+    private function _validateToken($tokenId)
     {
-        if ($tokens = $this->getAcceptableTokens()) {
+        if ($tokens = $this->_getAcceptableTokens()) {
             return in_array($tokenId, $tokens);
         }
 
@@ -438,9 +413,9 @@ class JSONParser
      *
      * @return array list of acceptable token codes
      */
-    private function getAcceptableTokens()
+    private function _getAcceptableTokens()
     {
-        $state = $this->getCurrentState();
+        $state = $this->_getCurrentState();
         $stateData = isset($this->_allowedNextTokens[$state]) ? $this->_allowedNextTokens[$state] : null;
         if (is_null($stateData)) {
             return null;
@@ -454,7 +429,7 @@ class JSONParser
      *
      * @return number
      */
-    private function getCurrentState()
+    private function _getCurrentState()
     {
         return $this->_stateStack[0];
     }
@@ -511,5 +486,30 @@ class JSONParser
     public function setScalarHandler($scalarHandler)
     {
         $this->_scalarHandler = $scalarHandler;
+    }
+
+    /**
+     * Convenience method for preparing a lexer and parsing a specific file.
+     *
+     * @param resource|string $file resource to read
+     *
+     * @throws JSONParserException if the resource to read cannot be found
+     * OR if the document does not conform to JSON's syntax.
+     */
+    public function parseDocument($file)
+    {
+        // check the parameter type to see if we need to open a new stream
+        $stream = is_resource($file) ? $file : fopen($file, 'r');
+        if (is_null($stream)) {
+            throw new JSONParserException(sprintf('Could not open resource %s for reading', $file));
+        }
+
+        // instanciate a lexer
+        $lexer = new JSONLex($stream);
+
+        // parse the document
+        while ($token = $lexer->nextToken()) {
+            $this->_parse($token->type, $token);
+        }
     }
 }

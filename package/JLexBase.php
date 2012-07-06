@@ -1,4 +1,4 @@
-<?php # vim:ts=2:sw=2:et:
+<?php
 /*
   Copyright 2006 Wez Furlong, OmniTI Computer Consulting, Inc.
   Based on JLex which is:
@@ -28,33 +28,9 @@
 /**
  *
  */
-class JLexToken
-{
-    public $line;
-    public $col;
-    public $value;
-    public $type;
-
-    /**
-     * @param      $type
-     * @param null $value
-     * @param null $line
-     * @param null $col
-     */
-    public function __construct($type, $value = null, $line = null, $col = null)
-    {
-        $this->line = $line;
-        $this->col = $col;
-        $this->value = $value;
-        $this->type = $type;
-    }
-}
-
-/**
- *
- */
 class JLexBase
 {
+    const BUFFER_SIZE = 8192;
     const YY_F = -1;
     const YY_NO_STATE = -1;
     const YY_NOT_ACCEPT = 0;
@@ -62,25 +38,35 @@ class JLexBase
     const YY_END = 2;
     const YY_NO_ANCHOR = 4;
     const YY_BOL = 65536;
-    const YY_EOF = -1;
+    const YY_EOF = 65537;
 
-    protected $yy_reader;
-    protected $yy_buffer;
-    protected $yy_buffer_read;
-    protected $yy_buffer_index;
-    protected $yy_buffer_start;
-    protected $yy_buffer_end;
-    protected $yychar = 0;
-    protected $yycol = 0;
-    protected $yyline = 0;
-    protected $yy_at_bol;
-    protected $yy_lexical_state;
-    protected $yy_last_was_cr = false;
-    protected $yy_count_lines = false;
-    protected $yy_count_chars = false;
-    protected $yyfilename = null;
+    protected $_reader;
+    protected $_streamFilename = null;
 
-    static $yy_error_string
+    /**
+     * @var string
+     */
+    protected $_buffer;
+
+    protected $_bufferRead;
+    protected $_bufferIndex;
+    protected $_bufferStart;
+    protected $_bufferEnd;
+    protected $_char = 0;
+    protected $_col = 0;
+    protected $_line = 0;
+    protected $_atBol;
+
+    protected $_lexicalState;
+
+    protected $_lastWasCr = false;
+    protected $_countLines = false;
+    protected $_countChars = false;
+
+    /**
+     * @var array
+     */
+    static $errorStrings
         = array(
             'INTERNAL' => "Error: internal error.\n",
             'MATCH'    => "Error: Unmatched input.\n"
@@ -91,160 +77,202 @@ class JLexBase
      */
     public function __construct($stream)
     {
-        $this->yy_reader = $stream;
+        $this->_reader = $stream;
         $meta = stream_get_meta_data($stream);
         if (!isset($meta['uri'])) {
-            $this->yyfilename = '<<input>>';
+            $this->_streamFilename = '<<input>>';
         } else {
-            $this->yyfilename = $meta['uri'];
+            $this->_streamFilename = $meta['uri'];
         }
 
-        $this->yy_buffer = "";
-        $this->yy_buffer_read = 0;
-        $this->yy_buffer_index = 0;
-        $this->yy_buffer_start = 0;
-        $this->yy_buffer_end = 0;
-        $this->yychar = 0;
-        $this->yyline = 1;
-        $this->yy_at_bol = true;
+        $this->_buffer = "";
+        $this->_bufferRead = 0;
+        $this->_bufferIndex = 0;
+        $this->_bufferStart = 0;
+        $this->_bufferEnd = 0;
+        $this->_char = 0;
+        $this->_line = 1;
+        $this->_atBol = true;
     }
 
-    protected function yybegin($state)
+    /**
+     * @param $state
+     */
+    protected function _begin($state)
     {
-        $this->yy_lexical_state = $state;
+        $this->_lexicalState = $state;
     }
 
-    protected function yy_advance()
+    /**
+     * @return int
+     */
+    protected function _advance()
     {
-        if ($this->yy_buffer_index < $this->yy_buffer_read) {
-            if (!isset($this->yy_buffer[$this->yy_buffer_index])) {
+        if ($this->_bufferIndex < $this->_bufferRead) {
+            if (!isset($this->_buffer[$this->_bufferIndex])) {
                 return self::YY_EOF;
             }
-            return ord($this->yy_buffer[$this->yy_buffer_index++]);
+            return ord($this->_buffer[$this->_bufferIndex++]);
         }
-        if ($this->yy_buffer_start != 0) {
+
+        if ($this->_bufferStart != 0) {
             /* shunt */
-            $j = $this->yy_buffer_read - $this->yy_buffer_start;
-            $this->yy_buffer = substr($this->yy_buffer, $this->yy_buffer_start, $j);
-            $this->yy_buffer_end -= $this->yy_buffer_start;
-            $this->yy_buffer_start = 0;
-            $this->yy_buffer_read = $j;
-            $this->yy_buffer_index = $j;
+            $j = $this->_bufferRead - $this->_bufferStart;
+            $this->_buffer = substr($this->_buffer, $this->_bufferStart, $j);
+            $this->_bufferEnd -= $this->_bufferStart;
+            $this->_bufferStart = 0;
+            $this->_bufferRead = $j;
+            $this->_bufferIndex = $j;
 
-            $data = fread($this->yy_reader, 8192);
+            $data = fread($this->_reader, self::BUFFER_SIZE);
             if ($data === false || !strlen($data)) {
                 return self::YY_EOF;
             }
-            $this->yy_buffer .= $data;
-            $this->yy_buffer_read += strlen($data);
+            $this->_buffer .= $data;
+            $this->_bufferRead += strlen($data);
         }
 
-        while ($this->yy_buffer_index >= $this->yy_buffer_read) {
-            $data = fread($this->yy_reader, 8192);
+        while ($this->_bufferIndex >= $this->_bufferRead) {
+            $data = fread($this->_reader, self::BUFFER_SIZE);
             if ($data === false || !strlen($data)) {
                 return self::YY_EOF;
             }
-            $this->yy_buffer .= $data;
-            $this->yy_buffer_read += strlen($data);
+            $this->_buffer .= $data;
+            $this->_bufferRead += strlen($data);
         }
-        return ord($this->yy_buffer[$this->yy_buffer_index++]);
+
+        return ord($this->_buffer[$this->_bufferIndex++]);
     }
 
-    protected function yy_move_end()
+    /**
+     *
+     */
+    protected function _moveEnd()
     {
-        if ($this->yy_buffer_end > $this->yy_buffer_start
-            && $this->yy_buffer[$this->yy_buffer_end - 1] == "\n"
+        if ($this->_bufferEnd > $this->_bufferStart
+            && $this->_buffer[$this->_bufferEnd - 1] == "\n"
         ) {
-            $this->yy_buffer_end--;
+            $this->_bufferEnd--;
         }
-        if ($this->yy_buffer_end > $this->yy_buffer_start
-            && $this->yy_buffer[$this->yy_buffer_end - 1] == "\r"
+        if ($this->_bufferEnd > $this->_bufferStart
+            && $this->_buffer[$this->_bufferEnd - 1] == "\r"
         ) {
-            $this->yy_buffer_end--;
+            $this->_bufferEnd--;
         }
     }
 
-    protected function yy_mark_start()
+    /**
+     *
+     */
+    protected function _markStart()
     {
-        if ($this->yy_count_lines || $this->yy_count_chars) {
-            if ($this->yy_count_lines) {
-                for ($i = $this->yy_buffer_start; $i < $this->yy_buffer_index; ++$i) {
-                    if ("\n" == $this->yy_buffer[$i] && !$this->yy_last_was_cr) {
-                        ++$this->yyline;
-                        $this->yycol = 0;
+        if ($this->_countLines || $this->_countChars) {
+            if ($this->_countLines) {
+                for ($i = $this->_bufferStart; $i < $this->_bufferIndex; ++$i) {
+                    if ("\n" == $this->_buffer[$i] && !$this->_lastWasCr) {
+                        ++$this->_line;
+                        $this->_col = 0;
                     }
-                    if ("\r" == $this->yy_buffer[$i]) {
+                    if ("\r" == $this->_buffer[$i]) {
                         ++$yyline;
-                        $this->yycol = 0;
-                        $this->yy_last_was_cr = true;
+                        $this->_col = 0;
+                        $this->_lastWasCr = true;
                     } else {
-                        $this->yy_last_was_cr = false;
+                        $this->_lastWasCr = false;
                     }
                 }
             }
-            if ($this->yy_count_chars) {
-                $this->yychar += $this->yy_buffer_index - $this->yy_buffer_start;
-                $this->yycol += $this->yy_buffer_index - $this->yy_buffer_start;
+            if ($this->_countChars) {
+                $this->_char += $this->_bufferIndex - $this->_bufferStart;
+                $this->_col += $this->_bufferIndex - $this->_bufferStart;
             }
-            $this->yy_buffer_start = $this->yy_buffer_index;
+            $this->_bufferStart = $this->_bufferIndex;
         }
     }
 
-    protected function yy_mark_end()
+    /**
+     *
+     */
+    protected function _markEnd()
     {
-        $this->yy_buffer_end = $this->yy_buffer_index;
+        $this->_bufferEnd = $this->_bufferIndex;
     }
 
-    protected function yy_to_mark()
+    /**
+     *
+     */
+    protected function _toMark()
     {
         #echo "yy_to_mark: setting buffer index to ", $this->yy_buffer_end, "\n";
-        $this->yy_buffer_index = $this->yy_buffer_end;
-        $this->yy_at_bol = ($this->yy_buffer_end > $this->yy_buffer_start)
-            && ("\r" == $this->yy_buffer[$this->yy_buffer_end - 1]
-                || "\n" == $this->yy_buffer[$this->yy_buffer_end - 1]
-                || 2028 /* unicode LS */ == $this->yy_buffer[$this->yy_buffer_end - 1]
-                || 2029 /* unicode PS */ == $this->yy_buffer[$this->yy_buffer_end - 1]);
+        $this->_bufferIndex = $this->_bufferEnd;
+        $this->_atBol = ($this->_bufferEnd > $this->_bufferStart)
+            && ("\r" == $this->_buffer[$this->_bufferEnd - 1]
+                || "\n" == $this->_buffer[$this->_bufferEnd - 1]
+                || 2028 /* unicode LS */ == $this->_buffer[$this->_bufferEnd - 1]
+                || 2029 /* unicode PS */ == $this->_buffer[$this->_bufferEnd - 1]);
     }
 
-    protected function yytext()
+    /**
+     * @return string
+     */
+    protected function _getText()
     {
         return substr(
-            $this->yy_buffer, $this->yy_buffer_start,
-            $this->yy_buffer_end - $this->yy_buffer_start
+            $this->_buffer, $this->_bufferStart,
+            $this->_bufferEnd - $this->_bufferStart
         );
     }
 
-    protected function yylength()
+    /**
+     * @return int
+     */
+    protected function _getLength()
     {
-        return $this->yy_buffer_end - $this->yy_buffer_start;
+        return $this->_bufferEnd - $this->_bufferStart;
     }
 
-    protected function yy_error($code, $fatal)
+    /**
+     * @param $code
+     * @param $fatal
+     *
+     * @throws Exception
+     */
+    protected function _triggerError($code, $fatal)
     {
-        print self::$yy_error_string[$code];
+        print self::$errorStrings[$code];
         flush();
         if ($fatal) {
-            throw new Exception("JLex fatal error " . self::$yy_error_string[$code]);
+            throw new Exception("JLex fatal error " . self::$errorStrings[$code]);
         }
     }
 
-    /* creates an annotated token */
-    function createToken($type = null, $value = null)
+    /**
+     * creates an annotated token
+     * @param null $type
+     * @param null $value
+     *
+     * @return JLexToken
+     */
+    public function createToken($type = null, $value = null)
     {
         if ($type === null) {
-            $type = $this->yytext();
+            $type = $this->_getText();
         }
         $tok = new JLexToken($type);
         $this->annotateToken($tok, $value);
         return $tok;
     }
 
-    /* annotates a token with a value and source positioning */
-    function annotateToken(JLexToken $tok, $value = null)
+    /**
+     * annotates a token with a value and source positioning
+     * @param JLexToken $tok
+     * @param null      $value
+     */
+    public function annotateToken(JLexToken $tok, $value = null)
     {
-        $tok->value = is_null($value) ? $this->yytext() : $value;
-        $tok->col = $this->yycol;
-        $tok->line = $this->yyline;
-        $tok->filename = $this->yyfilename;
+        $tok->value = is_null($value) ? $this->_getText() : $value;
+        $tok->col = $this->_col;
+        $tok->line = $this->_line;
+        $tok->filename = $this->_streamFilename;
     }
 }

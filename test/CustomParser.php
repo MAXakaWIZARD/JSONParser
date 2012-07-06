@@ -47,7 +47,7 @@ class CustomParser
         $parser->setArrayHandlers(array($this, 'handlerArrayStart'), array($this, 'handlerArrayEnd'));
         $parser->setObjectHandlers(array($this, 'handlerObjectStart'), array($this, 'handlerObjectEnd'));
 
-        $parser->parseDocument(fopen($jsonPath, 'r'));
+        $parser->parseDocument($jsonPath);
     }
 
     /**
