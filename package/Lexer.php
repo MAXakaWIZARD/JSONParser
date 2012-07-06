@@ -15,88 +15,94 @@ class Lexer extends LexerBase
 
     protected $_auxBuffer = '';
 
-    static $stateDtrans = array(0, 36);
+    /**
+     * @var array
+     */
+    protected $_stateDtrans = array(0, 36);
 
-    static $_acpt
+    /**
+     * @var array
+     */
+    protected $_acpt
         = array(
             /* 0 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 1 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 2 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 3 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 4 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 5 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 6 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 7 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 8 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 9 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 10 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 11 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 12 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 13 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 14 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 15 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 16 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 17 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 18 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 19 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 20 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 21 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 22 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 23 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 24 */
-            self::YY_NO_ANCHOR,
+            self::NO_ANCHOR,
             /* 25 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 26 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 27 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 28 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 29 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 30 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 31 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 32 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 33 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 34 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 35 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 36 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 37 */
-            self::YY_NOT_ACCEPT,
+            self::NOT_ACCEPT,
             /* 38 */
-            self::YY_NOT_ACCEPT
+            self::NOT_ACCEPT
         );
 
     /**
@@ -112,12 +118,18 @@ class Lexer extends LexerBase
             2, 15, 5, 2, 2, 2, 2, 2, 17, 2, 6, 2, 2, 2, 7, 18, 8, 14, 2, 2,
             2, 2, 2, 19, 2, 20);
 
-    static $_rMap
+    /**
+     * @var array
+     */
+    protected $_rMap
         = array(
             0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 3, 4, 1, 1, 1, 5, 1, 1, 1, 1,
             1, 1, 1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 7, 18, 19, 20,);
 
-    static $_nxt
+    /**
+     * @var array
+     */
+    protected $_nxt
         = array(
             array(
                 1, 2, -1, -1, -1, 23, 25, -1, 26, 27, 3, -1, -1, -1, -1, -1, -1, -1, -1, 4,
@@ -229,77 +241,66 @@ class Lexer extends LexerBase
         */
 
         //fill array
+        /*
         for ($i = 1; $i <= 65410; $i++) {
             $this->_cMap[] = 2;
         }
         $this->_cMap[] = 0;
         $this->_cMap[] = 0;
+        */
 
         //var_dump(count($this->_cMap));
         //count = 65538
-
-        /*
-        var_dump($flag);
-        echo "idx: ";
-        var_dump($i);
-        echo "val: ";
-        var_dump($val);
-        echo "counter: ";
-        var_dump($counter);
-        var_dump($cnt);
-        */
-        //exit;
     }
 
     /**
-     * @return JLexToken|null
-     * @throws Exception
+     * @return Token|null
+     * @throws \Exception
      */
     public function nextToken()
     {
-        $anchor = self::YY_NO_ANCHOR;
-        $state = self::$stateDtrans[$this->_lexicalState];
-        $nextState = self::YY_NO_STATE;
-        $lastAcceptState = self::YY_NO_STATE;
+        $anchor = self::NO_ANCHOR;
+        $state = $this->_stateDtrans[$this->_lexicalState];
+        $nextState = self::NO_STATE;
+        $lastAcceptState = self::NO_STATE;
         $initial = true;
 
         $this->_markStart();
-        $accept = self::$_acpt[$state];
-        if (self::YY_NOT_ACCEPT != $accept) {
+        $accept = $this->_acpt[$state];
+        if (self::NOT_ACCEPT != $accept) {
             $lastAcceptState = $state;
             $this->_markEnd();
         }
 
         while (true) {
             if ($initial && $this->_atBol) {
-                $lookahead = self::YY_BOL;
+                $lookahead = self::BOL;
             } else {
                 $lookahead = $this->_advance();
             }
-            $nextState = self::$_nxt[self::$_rMap[$state]][$this->_cMap[$lookahead]];
-            if (self::YY_EOF == $lookahead && true == $initial) {
+            $nextState = $this->_getNextState($state, $lookahead);
+            if (self::EOF == $lookahead && true == $initial) {
                 return null;
             }
-            if (self::YY_F != $nextState) {
+            if (self::F != $nextState) {
                 $state = $nextState;
                 $initial = false;
-                $accept = self::$_acpt[$state];
-                if (self::YY_NOT_ACCEPT != $accept) {
+                $accept = $this->_acpt[$state];
+                if (self::NOT_ACCEPT != $accept) {
                     $lastAcceptState = $state;
                     $this->_markEnd();
                 }
             } else {
-                if (self::YY_NO_STATE == $lastAcceptState) {
+                if (self::NO_STATE == $lastAcceptState) {
                     throw new \Exception("Lexical Error: Unmatched Input.");
                 } else {
-                    $anchor = self::$_acpt[$lastAcceptState];
-                    if (0 != (self::YY_END & $anchor)) {
+                    $anchor = $this->_acpt[$lastAcceptState];
+                    if (0 != (self::END & $anchor)) {
                         $this->_moveEnd();
                     }
                     $this->_toMark();
                     switch ($lastAcceptState) {
                         case 1:
-
                         case -2:
                             break;
                         case 2:
@@ -395,18 +396,39 @@ class Lexer extends LexerBase
                             $this->_triggerError('INTERNAL', false);
                         case -1:
                     }
+
                     $initial = true;
-                    $state = self::$stateDtrans[$this->_lexicalState];
-                    $nextState = self::YY_NO_STATE;
-                    $lastAcceptState = self::YY_NO_STATE;
+                    $state = $this->_stateDtrans[$this->_lexicalState];
+                    $nextState = self::NO_STATE;
+                    $lastAcceptState = self::NO_STATE;
                     $this->_markStart();
-                    $accept = self::$_acpt[$state];
-                    if (self::YY_NOT_ACCEPT != $accept) {
+
+                    $accept = $this->_acpt[$state];
+                    if (self::NOT_ACCEPT != $accept) {
                         $lastAcceptState = $state;
                         $this->_markEnd();
                     }
                 }
             }
         }
+    }
+
+    /**
+     * @param $state
+     * @param $lookahead
+     *
+     * @return mixed
+     */
+    protected function _getNextState($state, $lookahead)
+    {
+        if ($lookahead <= 125) {
+            $cMapValue = $this->_cMap[$lookahead];
+        } elseif ($lookahead < self::EOF - 1) {
+            $cMapValue = 2;
+        } else {
+            $cMapValue = 0;
+        }
+
+        return $this->_nxt[$this->_rMap[$state]][$cMapValue];
     }
 }

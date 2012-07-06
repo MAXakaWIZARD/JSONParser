@@ -33,14 +33,14 @@ namespace Json;
 class LexerBase
 {
     const BUFFER_SIZE = 8192;
-    const YY_F = -1;
-    const YY_NO_STATE = -1;
-    const YY_NOT_ACCEPT = 0;
-    const YY_START = 1;
-    const YY_END = 2;
-    const YY_NO_ANCHOR = 4;
-    const YY_BOL = 65536;
-    const YY_EOF = 65537;
+    const F = -1;
+    const NO_STATE = -1;
+    const NOT_ACCEPT = 0;
+    const START = 1;
+    const END = 2;
+    const NO_ANCHOR = 4;
+    const BOL = 65536;
+    const EOF = 65537;
 
     const LEX_STATE_INITIAL = 0;
     const LEX_STATE_STRING_BEGIN = 1;
@@ -117,7 +117,7 @@ class LexerBase
     {
         if ($this->_bufferIndex < $this->_bufferRead) {
             if (!isset($this->_buffer[$this->_bufferIndex])) {
-                return self::YY_EOF;
+                return self::EOF;
             }
             return ord($this->_buffer[$this->_bufferIndex++]);
         }
@@ -133,7 +133,7 @@ class LexerBase
 
             $data = fread($this->_reader, self::BUFFER_SIZE);
             if ($data === false || !strlen($data)) {
-                return self::YY_EOF;
+                return self::EOF;
             }
             $this->_buffer .= $data;
             $this->_bufferRead += strlen($data);
@@ -142,7 +142,7 @@ class LexerBase
         while ($this->_bufferIndex >= $this->_bufferRead) {
             $data = fread($this->_reader, self::BUFFER_SIZE);
             if ($data === false || !strlen($data)) {
-                return self::YY_EOF;
+                return self::EOF;
             }
             $this->_buffer .= $data;
             $this->_bufferRead += strlen($data);
