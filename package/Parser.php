@@ -273,7 +273,7 @@ class Parser
      *
      * @throws \Json\ParserException if the document does not have a valid structure.
      */
-    private function _parse($tokenId, $token)
+    private function _parseToken($tokenId, $token)
     {
         if (!$this->_validateToken($tokenId)) {
             $message = 'Invalid syntax: expected another token.';
@@ -492,7 +492,7 @@ class Parser
     }
 
     /**
-     * Convenience method for preparing a lexer and parsing a specific file.
+     * Convenient method for preparing a lexer and parsing a specific file.
      *
      * @param resource|string $file resource to read
      *
@@ -507,12 +507,12 @@ class Parser
             throw new ParserException(sprintf('Could not open resource %s for reading', $file));
         }
 
-        // instanciate a lexer
+        // instantiate a lexer
         $lexer = new Lexer($stream);
 
         // parse the document
         while ($token = $lexer->nextToken()) {
-            $this->_parse($token->type, $token);
+            $this->_parseToken($token->type, $token);
         }
     }
 }
