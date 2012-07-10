@@ -17,7 +17,7 @@ if ($method == 'jsonparser') {
     $parser = new \CustomParser();
 
     $startTime = microtime(true);
-    //$parser->parse('data/data.json');
+    $parser->parse('data/data.json');
     //$parser->parse('data/invalid.json');
     //$parser->parse('data/tournaments.json');
     $parser->parse('data/coaches.json');

@@ -184,7 +184,8 @@ class Lexer
             2, 2, 2, 2, 2, 2, 2, 2, 2, 12, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
             2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 21, 3, 22, 2, 2, 2, 16, 4, 2,
             2, 15, 5, 2, 2, 2, 2, 2, 17, 2, 6, 2, 2, 2, 7, 18, 8, 14, 2, 2,
-            2, 2, 2, 19, 2, 20);
+            2, 2, 2, 19, 2, 20
+        );
 
     /**
      * @var array
@@ -192,7 +193,8 @@ class Lexer
     protected $_rMap
         = array(
             0, 1, 1, 2, 1, 1, 1, 1, 1, 1, 3, 4, 1, 1, 1, 5, 1, 1, 1, 1,
-            1, 1, 1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 7, 18, 19, 20,);
+            1, 1, 1, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 7, 18, 19, 20,
+        );
 
     /**
      * @var array
@@ -487,6 +489,7 @@ class Lexer
 
     /**
      * creates an annotated token
+     *
      * @param null $type
      * @param null $value
      *
@@ -506,7 +509,8 @@ class Lexer
 
     /**
      * annotates a token with a value and source positioning
-     * @param Token $token
+     *
+     * @param Token     $token
      * @param null      $value
      */
     public function annotateToken(Token $token, $value = null)
@@ -564,102 +568,71 @@ class Lexer
 
                 $this->_toMark();
 
-                switch ($lastAcceptState) {
-                    case 1:
-                    case -2:
-                        break;
-                    case 2:
-                        $this->_auxBuffer = '';
-                        $this->_begin(self::LEX_STATE_STRING_BEGIN);
-                    case -3:
-                        break;
-                    case 3:
-                        return $this->createToken(Parser::TK_NUMBER);
-                    case -4:
-                        break;
-                    case 4:
-                        return $this->createToken(Parser::TK_LEFT_BRACE);
-                    case -5:
-                        break;
-                    case 5:
-                        return $this->createToken(Parser::TK_RIGHT_BRACE);
-                    case -6:
-                        break;
-                    case 6:
-                        return $this->createToken(Parser::TK_LEFT_SQUARE);
-                    case -7:
-                        break;
-                    case 7:
-                        return $this->createToken(Parser::TK_RIGHT_SQUARE);
-                    case -8:
-                        break;
-                    case 8:
-                        return $this->createToken(Parser::TK_COMMA);
-                    case -9:
-                        break;
-                    case 9:
-                        return $this->createToken(Parser::TK_COLON);
-                    case -10:
-                        break;
-                    case 10:
-                    case -11:
-                        break;
-                    case 11:
-                        return $this->createToken(Parser::TK_NUMBER);
-                    case -12:
-                        break;
-                    case 12:
-                        return $this->createToken(Parser::TK_NULL);
-                    case -13:
-                        break;
-                    case 13:
-                        return $this->createToken(Parser::TK_BOOL);
-                    case -14:
-                        break;
-                    case 14:
-                        $this->_begin(self::LEX_STATE_INITIAL);
-                        return $this->createToken(Parser::TK_STRING, $this->_auxBuffer);
-                    case -15:
-                        break;
-                    case 15:
-                        $this->_auxBuffer .= $this->_getText();
-                    case -16:
-                        break;
-                    case 16:
-                        $this->_auxBuffer .= '"';
-                    case -17:
-                        break;
-                    case 17:
-                        $this->_auxBuffer .= '\\';
-                    case -18:
-                        break;
-                    case 18:
-                        $this->_auxBuffer .= "\b";
-                    case -19:
-                        break;
-                    case 19:
-                        $this->_auxBuffer .= "\f";
-                    case -20:
-                        break;
-                    case 20:
-                        $this->_auxBuffer .= "\n";
-                    case -21:
-                        break;
-                    case 21:
-                        $this->_auxBuffer .= "\r";
-                    case -22:
-                        break;
-                    case 22:
-                        $this->_auxBuffer .= "\t";
-                    case -23:
-                        break;
-                    case 24:
-                        return $this->createToken(Parser::TK_NUMBER);
-                    case -24:
-                        break;
-                    default:
-                        $this->_triggerError('INTERNAL');
-                    case -1:
+                //echo $lastAcceptState . '<br/>';
+                //$this->usedStatesMap[$lastAcceptState]++;
+
+                if ($lastAcceptState > -24) {
+                    switch ($lastAcceptState) {
+                        case 1:
+                            break;
+                        case 2:
+                            $this->_auxBuffer = '';
+                            $this->_begin(self::LEX_STATE_STRING_BEGIN);
+                            break;
+                        case 3:
+                            return $this->createToken(Parser::TK_NUMBER);
+                        case 4:
+                            return $this->createToken(Parser::TK_LEFT_BRACE);
+                        case 5:
+                            return $this->createToken(Parser::TK_RIGHT_BRACE);
+                        case 6:
+                            return $this->createToken(Parser::TK_LEFT_SQUARE);
+                        case 7:
+                            return $this->createToken(Parser::TK_RIGHT_SQUARE);
+                        case 8:
+                            return $this->createToken(Parser::TK_COMMA);
+                        case 9:
+                            return $this->createToken(Parser::TK_COLON);
+                        case 10:
+                            break;
+                        case 11:
+                            return $this->createToken(Parser::TK_NUMBER);
+                        case 12:
+                            return $this->createToken(Parser::TK_NULL);
+                        case 13:
+                            return $this->createToken(Parser::TK_BOOL);
+                        case 14:
+                            $this->_begin(self::LEX_STATE_INITIAL);
+                            return $this->createToken(Parser::TK_STRING, $this->_auxBuffer);
+                        case 15:
+                            $this->_auxBuffer .= $this->_getText();
+                            break;
+                        case 16:
+                            $this->_auxBuffer .= '"';
+                            break;
+                        case 17:
+                            $this->_auxBuffer .= '\\';
+                            break;
+                        case 18:
+                            $this->_auxBuffer .= "\b";
+                            break;
+                        case 19:
+                            $this->_auxBuffer .= "\f";
+                            break;
+                        case 20:
+                            $this->_auxBuffer .= "\n";
+                            break;
+                        case 21:
+                            $this->_auxBuffer .= "\r";
+                            break;
+                        case 22:
+                            $this->_auxBuffer .= "\t";
+                            break;
+                        case 24:
+                            return $this->createToken(Parser::TK_NUMBER);
+                        default:
+                            $this->_triggerError('INTERNAL');
+                    }
                 }
 
                 $initial = true;

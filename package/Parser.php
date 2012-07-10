@@ -514,5 +514,8 @@ class Parser
         while ($token = $lexer->nextToken()) {
             $this->_parseToken($token->type, $token);
         }
+
+        //rsort($lexer->usedStatesMap);
+        //print_r($lexer->usedStatesMap);
     }
 }
