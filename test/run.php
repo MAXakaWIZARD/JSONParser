@@ -8,10 +8,7 @@ $method = 'jsonparser';
 //$method = 'jsondecode';
 
 if ($method == 'jsonparser') {
-    require_once BASE_PATH . '/package/Token.php';
-    require_once BASE_PATH . '/package/Lexer.php';
-    require_once BASE_PATH . '/package/Parser.php';
-    require_once BASE_PATH . '/package/ParserException.php';
+    require_once BASE_PATH . '/vendor/autoload.php';
     include('CustomParser.php');
 
     $parser = new \CustomParser();
