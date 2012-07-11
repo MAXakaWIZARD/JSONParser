@@ -23,6 +23,7 @@ if ($method == 'jsonparser') {
     $parser->parse('data/coaches.json');
     //$parser->parse('data/teams.json');
     //$parser->parse('data/matches.json');
+    //$parser->parse('data/players.json');
 
     $result = $parser->getData();
 } elseif ($method == 'jsondecode') {

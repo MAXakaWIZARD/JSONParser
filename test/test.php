@@ -37,4 +37,4 @@ $parser->setPropertyHandler('property');
 $parser->setScalarHandler('scalar');
 
 // parse the document
-$parser->parseDocument(__DIR__ . '/data.json');
+$parser->parseDocument(__DIR__ . '/data/data.json');
