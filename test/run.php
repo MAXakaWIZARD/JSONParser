@@ -1,12 +1,14 @@
 <?php
 set_time_limit(0);
+error_reporting(E_ALL & ~E_NOTICE);
+ini_set('display_errors', 1);
+ini_set('memory_limit', '1G');
 
 header('Content-type: text/html; charset=utf-8');
 define('BASE_PATH', realpath(__DIR__ . '/../'));
 
 $method = 'jsonparser';
 //$method = 'jsondecode';
-//$method = 'jsonlint';
 
 if ($method == 'jsonparser') {
     require_once BASE_PATH . '/vendor/autoload.php';
@@ -27,14 +29,6 @@ if ($method == 'jsonparser') {
 } elseif ($method == 'jsondecode') {
     $startTime = microtime(true);
     $result = json_decode(file_get_contents('data/coaches.json'), true);
-} elseif ($method == 'jsonlint') {
-    require_once BASE_PATH . '/../jsonlint/vendor/autoload.php';
-    $parser = new \Seld\JsonLint\JsonParser();
-
-    $startTime = microtime(true);
-
-    $json = file_get_contents('data/coaches.json');
-    $result = $parser->parse($json);
 }
 
 $timeTook = microtime(true) - $startTime;

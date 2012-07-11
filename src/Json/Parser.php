@@ -511,12 +511,25 @@ class Parser
         // instantiate a lexer
         $lexer = new Lexer($stream);
 
+        $lexer->usedStatesMap = array();
+        $lexer->advanceUsageMap = array();
+
         // parse the document
         while ($token = $lexer->nextToken()) {
             $this->_parseToken($token);
         }
 
-        //rsort($lexer->usedStatesMap);
-        //print_r($lexer->usedStatesMap);
+        /*
+        arsort($lexer->usedStatesMap);
+        echo '<pre>';
+        var_dump($lexer->usedStatesMap);
+        echo '</pre><br/>';
+        */
+
+        /*
+        echo '<pre>';
+        var_dump($lexer->advanceUsageMap);
+        echo '</pre><br/>';
+        */
     }
 }

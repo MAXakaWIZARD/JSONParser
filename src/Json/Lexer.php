@@ -32,7 +32,8 @@ namespace Json;
  */
 class Lexer
 {
-    const BUFFER_SIZE = 8192;
+    const BUFFER_SIZE = 16384;
+
     const F = -1;
     const NO_STATE = -1;
     const NOT_ACCEPT = 0;
@@ -46,7 +47,7 @@ class Lexer
     const LEX_STATE_INITIAL = 0;
     const LEX_STATE_STRING_BEGIN = 1;
 
-    protected $_reader;
+    protected $_dataStream;
     protected $_streamFilename = null;
 
     /**
@@ -60,10 +61,6 @@ class Lexer
     protected $_bufferIndex;
     protected $_bufferStart;
     protected $_bufferEnd;
-
-    protected $_char = 0;
-    protected $_col = 0;
-    protected $_line = 0;
 
     protected $_atStartOfLine;
 
@@ -91,84 +88,45 @@ class Lexer
      * @var array
      */
     protected $_acpt = array(
-        /* 0 */
-        self::NOT_ACCEPT,
-        /* 1 */
-        self::NO_ANCHOR,
-        /* 2 */
-        self::NO_ANCHOR,
-        /* 3 */
-        self::NO_ANCHOR,
-        /* 4 */
-        self::NO_ANCHOR,
-        /* 5 */
-        self::NO_ANCHOR,
-        /* 6 */
-        self::NO_ANCHOR,
-        /* 7 */
-        self::NO_ANCHOR,
-        /* 8 */
-        self::NO_ANCHOR,
-        /* 9 */
-        self::NO_ANCHOR,
-        /* 10 */
-        self::NO_ANCHOR,
-        /* 11 */
-        self::NO_ANCHOR,
-        /* 12 */
-        self::NO_ANCHOR,
-        /* 13 */
-        self::NO_ANCHOR,
-        /* 14 */
-        self::NO_ANCHOR,
-        /* 15 */
-        self::NO_ANCHOR,
-        /* 16 */
-        self::NO_ANCHOR,
-        /* 17 */
-        self::NO_ANCHOR,
-        /* 18 */
-        self::NO_ANCHOR,
-        /* 19 */
-        self::NO_ANCHOR,
-        /* 20 */
-        self::NO_ANCHOR,
-        /* 21 */
-        self::NO_ANCHOR,
-        /* 22 */
-        self::NO_ANCHOR,
-        /* 23 */
-        self::NOT_ACCEPT,
-        /* 24 */
-        self::NO_ANCHOR,
-        /* 25 */
-        self::NOT_ACCEPT,
-        /* 26 */
-        self::NOT_ACCEPT,
-        /* 27 */
-        self::NOT_ACCEPT,
-        /* 28 */
-        self::NOT_ACCEPT,
-        /* 29 */
-        self::NOT_ACCEPT,
-        /* 30 */
-        self::NOT_ACCEPT,
-        /* 31 */
-        self::NOT_ACCEPT,
-        /* 32 */
-        self::NOT_ACCEPT,
-        /* 33 */
-        self::NOT_ACCEPT,
-        /* 34 */
-        self::NOT_ACCEPT,
-        /* 35 */
-        self::NOT_ACCEPT,
-        /* 36 */
-        self::NOT_ACCEPT,
-        /* 37 */
-        self::NOT_ACCEPT,
-        /* 38 */
-        self::NOT_ACCEPT
+        /* 0 */ self::NOT_ACCEPT,
+        /* 1 */ self::NO_ANCHOR,
+        /* 2 */ self::NO_ANCHOR,
+        /* 3 */ self::NO_ANCHOR,
+        /* 4 */ self::NO_ANCHOR,
+        /* 5 */ self::NO_ANCHOR,
+        /* 6 */ self::NO_ANCHOR,
+        /* 7 */ self::NO_ANCHOR,
+        /* 8 */ self::NO_ANCHOR,
+        /* 9 */ self::NO_ANCHOR,
+        /* 10 */ self::NO_ANCHOR,
+        /* 11 */ self::NO_ANCHOR,
+        /* 12 */ self::NO_ANCHOR,
+        /* 13 */ self::NO_ANCHOR,
+        /* 14 */ self::NO_ANCHOR,
+        /* 15 */ self::NO_ANCHOR,
+        /* 16 */ self::NO_ANCHOR,
+        /* 17 */ self::NO_ANCHOR,
+        /* 18 */ self::NO_ANCHOR,
+        /* 19 */ self::NO_ANCHOR,
+        /* 20 */ self::NO_ANCHOR,
+        /* 21 */ self::NO_ANCHOR,
+        /* 22 */ self::NO_ANCHOR,
+        /* 23 */ self::NOT_ACCEPT,
+        /* 24 */ self::NO_ANCHOR,
+        /* 25 */ self::NOT_ACCEPT,
+        /* 26 */ self::NOT_ACCEPT,
+        /* 27 */ self::NOT_ACCEPT,
+        /* 28 */ self::NOT_ACCEPT,
+        /* 29 */ self::NOT_ACCEPT,
+        /* 30 */ self::NOT_ACCEPT,
+        /* 31 */ self::NOT_ACCEPT,
+        /* 32 */ self::NOT_ACCEPT,
+        /* 33 */ self::NOT_ACCEPT,
+        /* 34 */ self::NOT_ACCEPT,
+        /* 35 */ self::NOT_ACCEPT,
+        /* 36 */ self::NOT_ACCEPT,
+        /* 37 */ self::NOT_ACCEPT,
+        /* 38 */ self::NOT_ACCEPT
     );
 
     /**
@@ -286,9 +244,9 @@ class Lexer
      */
     public function __construct($stream)
     {
-        $this->_lexicalState = self::LEX_STATE_INITIAL;
+        $this->_setLexicalState(self::LEX_STATE_INITIAL);
 
-        $this->_reader = $stream;
+        $this->_dataStream = $stream;
         $meta = stream_get_meta_data($stream);
         if (isset($meta['uri'])) {
             $this->_streamFilename = $meta['uri'];
@@ -301,88 +259,81 @@ class Lexer
         $this->_bufferIndex = 0;
         $this->_bufferStart = 0;
         $this->_bufferEnd = 0;
-        $this->_char = 0;
-        $this->_line = 1;
+
         $this->_atStartOfLine = true;
-
-        /*
-        $cnt = count($this->_yy_cmap);
-        $flag = false;
-        $counter = 0;
-        for ($i = 126; $i < $cnt; $i++) {
-            if($this->_yy_cmap[$i] !== 2) {
-                $idx = $i;
-                $val = $this->_yy_cmap[$i];
-                $flag = true;
-                break;
-            } else {
-                $counter++;
-            }
-        }
-        */
-
-        //fill array
-        /*
-        for ($i = 1; $i <= 65410; $i++) {
-            $this->_cMap[] = 2;
-        }
-        $this->_cMap[] = 0;
-        $this->_cMap[] = 0;
-        */
-
-        //var_dump(count($this->_cMap));
-        //count = 65538
     }
 
     /**
      * @param $state
      */
-    protected function _begin($state)
+    protected function _setLexicalState($state)
     {
         $this->_lexicalState = $state;
     }
 
     /**
+     * returns next character code from data buffer
+     *
      * @return int
      */
     protected function _advance()
     {
-        if ($this->_bufferIndex < $this->_bufferRead) {
+        if ($this->_bufferIndex >= $this->_bufferRead) {
+            //unbuffered data needed
+
+            if ($this->_bufferStart != 0) {
+                //buffer end reached, cut already processed data
+                //$this->advanceUsageMap['branch2']++;
+
+                $bufferRemainLength = $this->_bufferRead - $this->_bufferStart;
+                $this->_buffer = substr($this->_buffer, $this->_bufferStart, $bufferRemainLength);
+                $this->_bufferEnd -= $this->_bufferStart;
+                $this->_bufferStart = 0;
+                $this->_bufferRead = $bufferRemainLength;
+                $this->_bufferIndex = $bufferRemainLength;
+            }
+
+            //read another portion of data
+            while ($this->_bufferIndex >= $this->_bufferRead) {
+                //$this->advanceUsageMap['branch3']++;
+
+                if (!$this->_readNextDataPortion()) {
+                    return self::EOF;
+                }
+            }
+        } else {
+            //data is already in buffer
+            //$this->advanceUsageMap['branch1']++;
+
             if (!isset($this->_buffer[$this->_bufferIndex])) {
                 return self::EOF;
             }
-            return ord($this->_buffer[$this->_bufferIndex++]);
-        }
-
-        if ($this->_bufferStart != 0) {
-            /* shunt */
-            $j = $this->_bufferRead - $this->_bufferStart;
-            $this->_buffer = substr($this->_buffer, $this->_bufferStart, $j);
-            $this->_bufferEnd -= $this->_bufferStart;
-            $this->_bufferStart = 0;
-            $this->_bufferRead = $j;
-            $this->_bufferIndex = $j;
-
-            $data = fread($this->_reader, self::BUFFER_SIZE);
-            $dataLength = strlen($data);
-            if ($data === false || !$dataLength) {
-                return self::EOF;
-            }
-            $this->_buffer .= $data;
-            $this->_bufferRead += $dataLength;
-        }
-
-        while ($this->_bufferIndex >= $this->_bufferRead) {
-            $data = fread($this->_reader, self::BUFFER_SIZE);
-            $dataLength = strlen($data);
-            if ($data === false || !$dataLength) {
-                return self::EOF;
-            }
-            $this->_buffer .= $data;
-            $this->_bufferRead += $dataLength;
         }
 
         return ord($this->_buffer[$this->_bufferIndex++]);
+    }
+
+    /**
+     * @return bool
+     */
+    protected function _readNextDataPortion()
+    {
+        if (feof($this->_dataStream)) {
+            //end of file reached
+            return false;
+        }
+
+        $data = fread($this->_dataStream, self::BUFFER_SIZE);
+
+        //error occured
+        if ($data === false) {
+            return false;
+        }
+
+        $this->_buffer .= $data;
+        $this->_bufferRead += strlen($data);
+
+        return true;
     }
 
     /**
@@ -401,41 +352,7 @@ class Lexer
     /**
      *
      */
-    protected function _markStart()
-    {
-        /*
-        for ($i = $this->_bufferStart; $i < $this->_bufferIndex; ++$i) {
-            if ("\n" == $this->_buffer[$i] && !$this->_lastWasCr) {
-                ++$this->_line;
-                $this->_col = 0;
-            } elseif ("\r" == $this->_buffer[$i]) {
-                ++$this->_line;
-                $this->_col = 0;
-                $this->_lastWasCr = true;
-            } else {
-                $this->_lastWasCr = false;
-            }
-        }
-
-        $this->_char += $this->_bufferIndex - $this->_bufferStart;
-        $this->_col += $this->_bufferIndex - $this->_bufferStart;
-        */
-
-        $this->_bufferStart = $this->_bufferIndex;
-    }
-
-    /**
-     *
-     */
-    protected function _markEnd()
-    {
-        $this->_bufferEnd = $this->_bufferIndex;
-    }
-
-    /**
-     *
-     */
-    protected function _toMark()
+    protected function _moveBufferIndexToBufferEnd()
     {
         //echo "_toMark: setting buffer index to ", $this->_bufferEnd, "<br/>";
         $this->_bufferIndex = $this->_bufferEnd;
@@ -480,7 +397,7 @@ class Lexer
      */
     protected function _triggerError($code, $fatal = false)
     {
-        print self::$errorStrings[$code];
+        echo self::$errorStrings[$code];
         flush();
 
         if ($fatal) {
@@ -496,30 +413,17 @@ class Lexer
      *
      * @return Token
      */
-    public function createToken($type = null, $value = null)
+    protected function _createToken($type = null, $value = null)
     {
         if (is_null($type)) {
             $type = $this->_getText();
         }
 
         $token = new Token($type);
-        $this->annotateToken($token, $value);
+        $token->value = is_null($value) ? $this->_getText() : $value;
+        $token->filename = $this->_streamFilename;
 
         return $token;
-    }
-
-    /**
-     * annotates a token with a value and source positioning
-     *
-     * @param Token     $token
-     * @param null      $value
-     */
-    public function annotateToken(Token $token, $value = null)
-    {
-        $token->value = is_null($value) ? $this->_getText() : $value;
-        $token->col = $this->_col;
-        $token->line = $this->_line;
-        $token->filename = $this->_streamFilename;
     }
 
     /**
@@ -529,20 +433,30 @@ class Lexer
     public function nextToken()
     {
         $anchor = self::NO_ANCHOR;
+
         $state = $this->_stateDtrans[$this->_lexicalState];
         $nextState = self::NO_STATE;
         $lastAcceptState = self::NO_STATE;
         $initial = true;
 
+        /*
         $accept = $this->_acpt[$state];
         if (self::NOT_ACCEPT != $accept) {
             $lastAcceptState = $state;
-            $this->_markEnd();
+            $this->_bufferEnd = $this->_bufferIndex;
         } else {
-            $this->_markStart();
+            $this->_bufferStart = $this->_bufferIndex;
         }
+        */
 
-        while (true) {
+        do {
+            $accept = $this->_acpt[$state];
+            if (self::NOT_ACCEPT != $accept) {
+                $lastAcceptState = $state;
+                $this->_bufferEnd = $this->_bufferIndex;
+            } else {
+                $this->_bufferStart = $this->_bufferIndex;
+            }
 
             if ($initial && $this->_atStartOfLine) {
                 $lookahead = self::LINE_START;
@@ -550,64 +464,72 @@ class Lexer
                 $lookahead = $this->_advance();
             }
 
-            if (self::EOF == $lookahead && $initial) {
+            if ($lookahead == self::EOF && $initial) {
+                //data end reached
                 return null;
             }
 
             $nextState = $this->_getNextState($state, $lookahead);
 
-            if (self::F == $nextState) {
+            if ($nextState == self::F) {
 
-                if (self::NO_STATE == $lastAcceptState) {
+                if ($lastAcceptState == self::NO_STATE) {
                     throw new \Exception("Lexical Error: Unmatched Input.");
                 }
 
+                /*
                 $anchor = $this->_acpt[$lastAcceptState];
                 if (0 != (self::END & $anchor)) {
                     $this->_moveEnd();
                 }
+                */
 
-                $this->_toMark();
+                $this->_bufferIndex = $this->_bufferEnd;
+                $this->_atStartOfLine = $this->_bufferEnd > $this->_bufferStart
+                    && $this->_isLineBreakChar($this->_buffer[$this->_bufferEnd - 1]);
 
-                //echo $lastAcceptState . '<br/>';
-                //$this->usedStatesMap[$lastAcceptState]++;
+                /*
+                if (isset($this->usedStatesMap[$lastAcceptState])) {
+                    $this->usedStatesMap[$lastAcceptState]++;
+                } else {
+                    $this->usedStatesMap[$lastAcceptState] = 1;
+                }
+                */
 
                 if ($lastAcceptState > -24) {
                     switch ($lastAcceptState) {
-                        case 1:
-                            break;
                         case 2:
                             $this->_auxBuffer = '';
-                            $this->_begin(self::LEX_STATE_STRING_BEGIN);
+                            $this->_setLexicalState(self::LEX_STATE_STRING_BEGIN);
                             break;
-                        case 3:
-                            return $this->createToken(Parser::TK_NUMBER);
-                        case 4:
-                            return $this->createToken(Parser::TK_LEFT_BRACE);
-                        case 5:
-                            return $this->createToken(Parser::TK_RIGHT_BRACE);
-                        case 6:
-                            return $this->createToken(Parser::TK_LEFT_SQUARE);
-                        case 7:
-                            return $this->createToken(Parser::TK_RIGHT_SQUARE);
-                        case 8:
-                            return $this->createToken(Parser::TK_COMMA);
-                        case 9:
-                            return $this->createToken(Parser::TK_COLON);
-                        case 10:
-                            break;
-                        case 11:
-                            return $this->createToken(Parser::TK_NUMBER);
-                        case 12:
-                            return $this->createToken(Parser::TK_NULL);
-                        case 13:
-                            return $this->createToken(Parser::TK_BOOL);
                         case 14:
-                            $this->_begin(self::LEX_STATE_INITIAL);
-                            return $this->createToken(Parser::TK_STRING, $this->_auxBuffer);
+                            $this->_setLexicalState(self::LEX_STATE_INITIAL);
+                            return $this->_createToken(Parser::TK_STRING, $this->_auxBuffer);
+                        case 8:
+                            return $this->_createToken(Parser::TK_COMMA);
                         case 15:
                             $this->_auxBuffer .= $this->_getText();
                             break;
+                        case 9:
+                            return $this->_createToken(Parser::TK_COLON);
+                        case 6:
+                            return $this->_createToken(Parser::TK_LEFT_SQUARE);
+                        case 7:
+                            return $this->_createToken(Parser::TK_RIGHT_SQUARE);
+                        case 3:
+                        case 11:
+                        case 24:
+                            return $this->_createToken(Parser::TK_NUMBER);
+                        case 4:
+                            return $this->_createToken(Parser::TK_LEFT_BRACE);
+                        case 5:
+                            return $this->_createToken(Parser::TK_RIGHT_BRACE);
+                        case 10:
+                            break;
+                        case 12:
+                            return $this->_createToken(Parser::TK_NULL);
+                        case 13:
+                            return $this->_createToken(Parser::TK_BOOL);
                         case 16:
                             $this->_auxBuffer .= '"';
                             break;
@@ -629,8 +551,8 @@ class Lexer
                         case 22:
                             $this->_auxBuffer .= "\t";
                             break;
-                        case 24:
-                            return $this->createToken(Parser::TK_NUMBER);
+                        case 1:
+                            break;
                         default:
                             $this->_triggerError('INTERNAL');
                     }
@@ -642,18 +564,12 @@ class Lexer
                 $nextState = self::NO_STATE;
                 $lastAcceptState = self::NO_STATE;
 
-                $this->_markStart();
+                //$this->_bufferStart = $this->_bufferIndex;
             } else {
                 $initial = false;
                 $state = $nextState;
             }
-
-            $accept = $this->_acpt[$state];
-            if (self::NOT_ACCEPT != $accept) {
-                $lastAcceptState = $state;
-                $this->_markEnd();
-            }
-        }
+        } while (true);
     }
 
     /**

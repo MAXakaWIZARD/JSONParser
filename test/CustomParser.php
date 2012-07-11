@@ -10,10 +10,11 @@ class CustomParser
      */
     private $_data;
 
-    /**
-     * @var
-     */
-    private $_writePointer;
+    private $_jsonArrayStarted;
+
+    private $_jsonArray;
+
+    private $_lastProperty;
 
     /**
      *

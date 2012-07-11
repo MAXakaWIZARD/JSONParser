@@ -1,7 +1,7 @@
 <?php
-require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'package/JSONParser.php';
-
 error_reporting(E_ALL);
+
+require_once __DIR__ . '/../vendor/autoload.php';
 
 function objStart($value, $property) {
 	printf("{\n");
@@ -27,8 +27,8 @@ function scalar($value, $property) {
 	printf("Value: %s\n", $value);
 }
 
-// initialise the parser object
-$parser = new JSONParser();
+// initialize the parser object
+$parser = new \Json\Parser();
 
 // sets the callbacks
 $parser->setArrayHandlers('arrayStart', 'arrayEnd');

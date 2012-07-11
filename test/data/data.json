@@ -17,6 +17,10 @@
 	"object": {
 		"property1": 1,
 		"property2": 2,
-		"property3": "3"
+		"property3": "3",
+        "nestedOject": {
+            "a": 3,
+            "b": "cat"
+        }
 	}
 }
