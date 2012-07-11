@@ -6,6 +6,7 @@ define('BASE_PATH', realpath(__DIR__ . '/../'));
 
 $method = 'jsonparser';
 //$method = 'jsondecode';
+//$method = 'jsonlint';
 
 if ($method == 'jsonparser') {
     require_once BASE_PATH . '/vendor/autoload.php';
@@ -14,7 +15,7 @@ if ($method == 'jsonparser') {
     $parser = new \CustomParser();
 
     $startTime = microtime(true);
-    $parser->parse('data/data.json');
+    //$parser->parse('data/data.json');
     //$parser->parse('data/invalid.json');
     //$parser->parse('data/tournaments.json');
     $parser->parse('data/coaches.json');
@@ -26,18 +27,13 @@ if ($method == 'jsonparser') {
 } elseif ($method == 'jsondecode') {
     $startTime = microtime(true);
     $result = json_decode(file_get_contents('data/coaches.json'), true);
-} elseif ($method == 'jslint') {
-    require_once BASE_PATH . '/../jsonlint/src/Seld/JsonLint/JsonParser.php';
-    require_once BASE_PATH . '/../jsonlint/src/Seld/JsonLint/Lexer.php';
-    require_once BASE_PATH . '/../jsonlint/src/Seld/JsonLint/ParsingException.php';
-    require_once BASE_PATH . '/../jsonlint/src/Seld/JsonLint/Undefined.php';
-
+} elseif ($method == 'jsonlint') {
+    require_once BASE_PATH . '/../jsonlint/vendor/autoload.php';
     $parser = new \Seld\JsonLint\JsonParser();
 
     $startTime = microtime(true);
 
-    //$json = file_get_contents('data/tournaments.json');
-    $json = file_get_contents('data/teams.json');
+    $json = file_get_contents('data/coaches.json');
     $result = $parser->parse($json);
 }
 

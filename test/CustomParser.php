@@ -37,7 +37,6 @@ class CustomParser
     public function parse($jsonPath)
     {
         $this->_data = array();
-        $this->_writePointer = &$this->_data;
 
         $parser = new \Json\Parser();
 
@@ -55,8 +54,8 @@ class CustomParser
     public function handlerScalar($value)
     {
         //printf("Scalar: %s<br/>", $value);
-        if (is_array($this->_writePointer)) {
-            $this->_writePointer[] = $value;
+        if ($this->_jsonArrayStarted) {
+            $this->_jsonArray[] = $value;
         }
     }
 
@@ -66,8 +65,7 @@ class CustomParser
     public function handlerProperty($name)
     {
         //printf("Property: %s<br/>", $name);
-        $this->_data[$name] = array();
-        $this->_writePointer = &$this->_data[$name];
+        $this->_lastProperty = $name;
     }
 
     /**
@@ -77,6 +75,9 @@ class CustomParser
     public function handlerArrayStart($value, $property)
     {
         //printf("[<br/>");
+        $this->_lastProperty = $property;
+        $this->_jsonArrayStarted = true;
+        $this->_jsonArray = array();
     }
 
     /**
@@ -86,6 +87,12 @@ class CustomParser
     public function handlerArrayEnd($value, $property)
     {
         //printf("]<br/>");
+        $this->_jsonArrayStarted = false;
+        if ($this->_lastProperty) {
+            $this->_data['data'][$this->_lastProperty] = $this->_jsonArray;
+        } else {
+            $this->_data['data'][] = $this->_jsonArray;
+        }
     }
 
     /**
@@ -95,6 +102,9 @@ class CustomParser
     public function handlerObjectStart($value, $property)
     {
         //printf("{<br/>");
+        if ($property == 'data') {
+            $this->_data['data'] = array();
+        }
     }
 
     /**

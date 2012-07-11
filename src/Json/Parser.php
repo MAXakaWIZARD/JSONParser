@@ -268,30 +268,31 @@ class Parser
     /**
      * Accept a new token, generally provided by a Lexer.
      *
-     * @param integer   $tokenId
-     * @param \Json\Token $token
+     * @param Token $token
      *
-     * @throws \Json\ParserException if the document does not have a valid structure.
+     * @throws ParserException if the document does not have a valid structure.
      */
-    private function _parseToken($tokenId, $token)
+    private function _parseToken($token)
     {
-        if (!$this->_validateToken($tokenId)) {
+        $tokenId = $token->type;
+        if (!$this->_validateToken($token)) {
             $message = 'Invalid syntax: expected another token.';
             $message .= ' Got token: ' . $tokenId . ', previous token: ' . $this->_currentTokenId;
             throw new ParserException($message);
         }
 
-        $this->_processToken($tokenId, $token);
+        $this->_processToken($token);
     }
 
     /**
      *
      *
-     * @param integer   $tokenId
-     * @param JLexToken $token
+     * @param Token $token
      */
-    private function _processToken($tokenId, $token)
+    private function _processToken($token)
     {
+        $tokenId = $token->type;
+
         // update the current token
         $this->_currentTokenId = $tokenId;
 
@@ -398,23 +399,23 @@ class Parser
     /**
      * Determines if a given token code is acceptable for the current state of the parser.
      *
-     * @param number $tokenId
+     * @param Token $token
      *
      * @return boolean <code>true</code> if the token is acceptable, <code>false</code> otherwise
      */
-    private function _validateToken($tokenId)
+    private function _validateToken($token)
     {
         if ($tokens = $this->_getAcceptableTokens()) {
-            return in_array($tokenId, $tokens);
+            return in_array($token->type, $tokens);
         }
 
         return false;
     }
 
     /**
-     * Return all the currently acceptable tokens given the current parser state and active token.
+     * Return all the currently acceptable tokens given the current parser state and active token
      *
-     * @return array list of acceptable token codes
+     * @return array|null
      */
     private function _getAcceptableTokens()
     {
@@ -496,7 +497,7 @@ class Parser
      *
      * @param resource|string $file resource to read
      *
-     * @throws \Json\ParserException if the resource to read cannot be found
+     * @throws ParserException if the resource to read cannot be found
      * OR if the document does not conform to JSON's syntax.
      */
     public function parseDocument($file)
@@ -512,7 +513,7 @@ class Parser
 
         // parse the document
         while ($token = $lexer->nextToken()) {
-            $this->_parseToken($token->type, $token);
+            $this->_parseToken($token);
         }
 
         //rsort($lexer->usedStatesMap);
